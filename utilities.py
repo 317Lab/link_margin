@@ -112,7 +112,30 @@ def get_rx_gain(sheet_name, thetas, phis):
     grid = np.column_stack((signal_data[:,0], signal_data[:,1]))
     f = ip.LinearNDInterpolator(grid, signal_data[:,2])
     gains = f(thetas, phis)
-    return(gains)
+    return gains
+
+def get_rx_interpolator(sheet_name):
+    signal_data = pd.read_excel(sheet_name)
+
+    # Match NEC angle scales to trajectory data
+    signal_data['THETA']=signal_data['THETA'].abs()
+    # thetas = np.abs(np.degrees(thetas))
+    # phis = np.degrees(phis)+90
+
+    # convert absolute loss value to avoid screwing up the interpolation
+    signal_data.loc[signal_data['TOTAL']<=-900, 'TOTAL']=-20
+    # convert to numpy
+    signal_data = signal_data[['THETA', 'PHI', 'TOTAL']].to_numpy()
+
+    # grid for 2D interpolation
+    grid = np.column_stack((signal_data[:,0], signal_data[:,1]))
+    f = ip.LinearNDInterpolator(grid, signal_data[:,2])
+    return f
+
+def eval_rx_gain(interpolator, thetas, phis):
+    thetas = np.abs(np.degrees(thetas))
+    phis = np.degrees(phis)+90
+    return interpolator(thetas,phis)
 
 # NOTE - New PyNEC installations on unix are broken. Must install version 1.7.3.4.
 # Get dipole gain pattern for given frequency, length
@@ -153,7 +176,15 @@ def get_tx_gain(frequency, length, thetas, phis):
     f = ip.RectBivariateSpline(theta_grid, phi_grid, gains)
     result = f(thetas, phis, grid=False)
     return result
-
+def get_tx_interpolator(frequency, length):
+    gains = pynec_dipole_gain(frequency, length)
+    theta_grid = np.linspace(0,90,90)
+    phi_grid = np.linspace(0,180,180)
+    # I don't remember why I used RBS here - cubic spline should also be fine 
+    f = ip.RectBivariateSpline(theta_grid, phi_grid, gains)
+    return f
+def eval_tx_gain(interpolator, thetas, phis):
+    return interpolator(thetas, phis, grid=False)
 ############################################ SIGNAL POWER ############################################
 
 # constants:

@@ -8,8 +8,8 @@ from enum import Enum
 ############################################# User Parameters ############################################
 # Plot selection
 power = True
-powerSum = True
-trajectory = True
+powerSum = False
+trajectory = False
 
 # sample rate for interpolation
 sample_rate = 50
@@ -25,6 +25,8 @@ receiveGain = True
 
 # consider transmit gain pattern
 transmitGain = True
+
+includePolarization = True
 
 # Time slice for plot
 startTime = 0
@@ -134,23 +136,21 @@ for recv in Receiver:
     losses_ns = ut.get_polarization_loss(rec_ns, transmitters, rocket_enu)
 
     # calculate received power
-    if receiveGain and transmitGain:
-        signal_ew = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ew, powerUnits)
-        signal_ns = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ns, powerUnits)
-    elif transmitGain and not receiveGain:
-        signal_ew = ut.calc_received_power(radius, 1, tx_gains, losses_ew, powerUnits)
-        signal_ns = ut.calc_received_power(radius, 1, tx_gains, losses_ns, powerUnits)
-    elif receiveGain and not transmitGain:
-        signal_ew = ut.calc_received_power(radius, rx_gains, 1, losses_ew, powerUnits)
-        signal_ns = ut.calc_received_power(radius, rx_gains, 1, losses_ns, powerUnits)
-    else:
-        signal_ew = ut.calc_received_power(radius, 1, 1, losses_ew, powerUnits)
-        signal_ns = ut.calc_received_power(radius, 1, 1, losses_ns, powerUnits)
-
+    if not receiveGain:
+        rx_gains = 1
+    if not transmitGain:
+        tx_gains = 1
+    if not includePolarization:
+        losses_ew = 1
+        losses_ns = 1
+    signal_ew = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ew, powerUnits)
+    signal_ns = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ns, powerUnits)
     # store to dictionary for plotting
     signals[recv] = (signal_ew, signal_ns)
 
+
 ############################################## Plotting ##################################################
+
 ut.showPlots(times_interp=times_interp, radius=radius, receive_enum=Receiver, signals=signals,  
              powerUnits=powerUnits, startTime=startTime, endTime=endTime,thetas=thetas, 
              power=power, powerSum=powerSum, trajectory=trajectory)
