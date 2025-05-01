@@ -188,19 +188,19 @@ def eval_tx_gain(interpolator, thetas, phis):
 ############################################ SIGNAL POWER ############################################
 
 # constants:
-freq = 162.990625e6  # transmit frequency (Hz)
-txPwr = 2 # Transmit power in Watts
+#freq = 162.990625e6  # transmit frequency (Hz)
+#txPwr = 2 # Transmit power in Watts
 c_speed = 3.0e8  # Speed of light in m/s
 
-def path_loss(radius):
+def path_loss(radius, freq):
     return (4*np.pi*radius*freq/c_speed)**2
 
 # Standard Friis transmission equation with polarization loss factor. 
 # Polarization loss is squared because it represents electromagnetic energy projected onto receiver.
-def calc_received_power(radius, gains_rx, gains_tx, ploss, unit):
+def calc_received_power(radius, gains_rx, gains_tx, ploss, unit, txPwr, freq):
     if unit != 1 and unit != 0:
         raise ValueError("Invalid unit specification. 0=dBm, 1=Watts")
-    result_watts = (txPwr * np.multiply(np.multiply(gains_tx,gains_rx),ploss**2))/path_loss(radius)
+    result_watts = (txPwr * np.multiply(np.multiply(gains_tx,gains_rx),ploss**2))/path_loss(radius,freq)
      # eliminate negative powers
     result_watts[result_watts<=0]=1e-100
     if unit == 0:
@@ -260,9 +260,9 @@ def showPlots(times_interp, radius, receive_enum, signals, powerUnits, startTime
             axs[2].plot(times_interp, ns, label=f"{recv.name} NS")
         axs[2].set_title("Received Power")
         if powerUnits == 0:
-            axs[0,1].set_ylabel("dBm")
+            axs[2].set_ylabel("dBm")
         elif powerUnits == 1:
-            axs[0,1].set_ylabel("Watts")
+            axs[2].set_ylabel("Watts")
         else:
             raise ValueError("powerUnits must be 0 (dBm) or 1 (Watts)")
         axs[2].legend()
@@ -284,9 +284,9 @@ def showPlots(times_interp, radius, receive_enum, signals, powerUnits, startTime
         axs[1].plot(times_interp, ew+ns)
         axs[1].set_title("Sum of Received Power")
         if powerUnits == 0:
-            axs[0,1].set_ylabel("dBm")
+            axs[1].set_ylabel("dBm")
         elif powerUnits == 1:
-            axs[0,1].set_ylabel("Watts")
+            axs[1].set_ylabel("Watts")
         else:
             raise ValueError("powerUnits must be 0 (dBm) or 1 (Watts)")
         # plt.gca().set_ylim(bottom=-130)
@@ -325,15 +325,23 @@ def showPlots(times_interp, radius, receive_enum, signals, powerUnits, startTime
             ew, ns = signals[recv]
             plt.plot(times_interp, ew, label=f"{recv.name} EW")
             plt.plot(times_interp, ns, label=f"{recv.name} NS")
-        plt.title("Received Power")
+        plt.title("Predicted Received Power")
         if powerUnits == 0:
-            plt.ylabel("dBm")
+            plt.ylabel("Intensity (dBm)")
         elif powerUnits == 1:
-            plt.ylabel("Watts")
+            plt.ylabel("Intensity (W)")
         else:
             raise ValueError("powerUnits must be 0 (dBm) or 1 (Watts)")
         plt.xlabel("Time (s)")
         plt.xlim(startTime,endTime)
+        plt.ylim(-120,-70)
+        # limit_slice = ew[startTime:endTime]
+        # upper = np.max(limit_slice[limit_slice>-200])
+        # lower = np.min(limit_slice[limit_slice>-200])
+        # upper = np.max(ew[startTime:endTime])
+        # lower = np.min(ew[startTime:endTime])
+        #plt.ylim(-145,)
+        # plt.ylim(lower-5,upper+5)
         plt.subplots_adjust(bottom=0.1, top=0.9, left=0.1, right=0.9, hspace=0.5)
         plt.legend()
         plt.show()
@@ -344,6 +352,7 @@ def showPlots(times_interp, radius, receive_enum, signals, powerUnits, startTime
         axs[0].plot(times_interp, radius)
         axs[0].set_title("Radius")
         axs[0].set_ylabel("Radius (km)")
+        axs[0].set_xlim(0,300)
         axs[1].plot(times_interp, np.abs(np.abs(thetas)-np.pi/2))
         axs[1].set_title("(Absolute) Elevation Angle")
         axs[1].set_ylabel("Angle (rad)")

@@ -15,7 +15,7 @@ trajectory = False
 sample_rate = 50
 
 # rocket spin frequency
-omega = np.pi/2
+omega = np.pi*2
 
 # Giraff vs GNEISS trajectory
 isGiraff = True
@@ -29,16 +29,16 @@ transmitGain = True
 includePolarization = True
 
 # Time slice for plot
-startTime = 0
-endTime = 600
+startTime = 300
+endTime = 303
 
 # Received power units. 0 == dBm, 1 == Watts
-powerUnits = 1
+powerUnits = 0
 
 # Receiver enum - comment out receivers you don't want to plot
 class Receiver(Enum):
-    # PF = 0
-    # VT = 1
+    PF = 0
+    VT = 1
     TL = 2
     # AV = 3
 
@@ -72,11 +72,24 @@ ell_grs = pm.Ellipsoid.from_name('grs80')
 # receiver gain - from Alexx' NEC model
 nec_sheet_name = "10152024_nec_data.xlsx"
 # Giraff GPS data
-gps_sheet_name = "giraff_gps.xlsx"
+#gps_sheet_name = "giraff_381_gps.xlsx"
+giraff_num = 380
+# 380 doesn't begin at t=0
+offset_380 = 250
+
+txPwr = 0.5
+freq = 150e6
 
 ############################################# Data Generation ############################################
 if isGiraff:
-    times, raw_lla = ny.read_gps_file(gps_sheet_name)
+    filename = str(giraff_num)+"_processed.npz"
+    data = np.load(filename)
+    times = data['times']
+    raw_lla = data['lla']
+    start_idx = np.where(times==offset_380)[0][0]
+    times=times[start_idx:-1]
+    times = times-offset_380
+    raw_lla=raw_lla[start_idx:-1,:]
 else:
     traj_arrays = ny.read_traj_data("Traj_Right.txt")
     times = ny.get_times(traj_arrays)
@@ -100,7 +113,7 @@ transmitters = ut.get_transmitters(mag_vec_spherical, times_interp, omega)
 # store signals at each receiver in a dictionary
 signals = {}
 
-
+got_rad = False
 for recv in Receiver:
     lat, lon = coords[recv.value]
 
@@ -119,6 +132,9 @@ for recv in Receiver:
     rocket_enu[idx,2] = 0.0001
     # spherical coordinates for path length and gain calculations (this can probably be more efficient)
     radius = np.linalg.norm(rocket_enu, axis=1)
+    if recv == Receiver.PF and not got_rad:
+        rad_for_plots = radius
+        got_rad = True
     thetas = ut.get_thetas(rocket_enu)
     phis = ut.get_phis(rocket_enu)
     # calculate antenna gain
@@ -143,14 +159,15 @@ for recv in Receiver:
     if not includePolarization:
         losses_ew = 1
         losses_ns = 1
-    signal_ew = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ew, powerUnits)
-    signal_ns = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ns, powerUnits)
+    signal_ew = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ew, powerUnits, txPwr=txPwr, freq=freq)
+    signal_ns = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ns, powerUnits, txPwr=txPwr, freq=freq)
     # store to dictionary for plotting
     signals[recv] = (signal_ew, signal_ns)
-
+    savepath = str(recv)+"_intensity"
+    #np.savez_compressed(savepath, ew=signal_ew,ns=signal_ns)
 
 ############################################## Plotting ##################################################
-
-ut.showPlots(times_interp=times_interp, radius=radius, receive_enum=Receiver, signals=signals,  
-             powerUnits=powerUnits, startTime=startTime, endTime=endTime,thetas=thetas, 
-             power=power, powerSum=powerSum, trajectory=trajectory)
+#np.savez_compressed("times", times=times_interp)
+ut.showPlots(times_interp=times_interp, radius=rad_for_plots, receive_enum=Receiver, signals=signals,  
+              powerUnits=powerUnits, startTime=startTime, endTime=endTime,thetas=thetas, 
+              power=power, powerSum=powerSum, trajectory=trajectory)
