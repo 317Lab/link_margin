@@ -1,0 +1,60 @@
+Poker Flat:
+ Right Trajectory: 3.38 - 523.66
+ Left Trajectory: 3.44 - 513.56
+
+Venetie:
+ Right Trajectory: 36.36 - 545.42
+ Left Trajectory: 36.60 - 535.12
+
+Beaver:
+ Right Trajectory: 29.90 - 537.06
+ Left Trajectory: 30.04 - 527.68
+
+Arctic Village:
+ Right Trajectory: 44.96 - 553.74
+ Left Trajectory: 45.32 - 585.66
+
+Toolik:
+ Right Trajectory: 50.24 - 547.62
+ Left Trajectory: 50.60 - 550.92
+
+Coldfoot:
+ Right Trajectory: 40.34 - 538.36
+ Left Trajectory: 40.48 - 533.14
+
+Bettles:
+ Right Trajectory: 40.02 - 532.68
+ Left Trajectory: 40.10 - 527.60
+
+Delta:
+ Right Trajectory: 32.32 - 512.80
+ Left Trajectory: 32.62 - 500.60
+
+Manley:
+ Right Trajectory: 32.18 - 516.36
+ Left Trajectory: 32.14 - 509.22
+
+Yukon Bridge:
+ Right Trajectory: 29.92 - 527.46
+ Left Trajectory: 29.90 - 520.20
+
+Central:
+ Right Trajectory: 31.00 - 533.96
+ Left Trajectory: 31.32 - 520.94
+
+Old Crow:
+ Right Trajectory: 53.14 - 545.60
+ Left Trajectory: 54.16 - 525.70
+
+Fort Yukon:
+ Right Trajectory: 34.52 - 541.82
+ Left Trajectory: 34.80 - 529.28
+
+Eagle:
+ Right Trajectory: 43.78 - 520.96
+ Left Trajectory: 44.54 - 504.22
+
+Kaktovik:
+ Right Trajectory: 63.90 - 562.30
+ Left Trajectory: 64.92 - 540.32
+

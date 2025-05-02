@@ -29,8 +29,8 @@ transmitGain = True
 includePolarization = True
 
 # Time slice for plot
-startTime = 300
-endTime = 303
+startTime = 10
+endTime = 13
 
 # Received power units. 0 == dBm, 1 == Watts
 powerUnits = 0
@@ -112,8 +112,10 @@ transmitters = ut.get_transmitters(mag_vec_spherical, times_interp, omega)
 
 # store signals at each receiver in a dictionary
 signals = {}
+theta_arr = np.zeros((len(times_interp), len(Receiver)))
 
 got_rad = False
+counter = 0
 for recv in Receiver:
     lat, lon = coords[recv.value]
 
@@ -136,6 +138,8 @@ for recv in Receiver:
         rad_for_plots = radius
         got_rad = True
     thetas = ut.get_thetas(rocket_enu)
+    theta_arr[:, counter] = np.rad2deg(np.abs(np.abs(thetas)-np.pi/2))
+    counter += 1
     phis = ut.get_phis(rocket_enu)
     # calculate antenna gain
     if receiveGain:
@@ -163,11 +167,21 @@ for recv in Receiver:
     signal_ns = ut.calc_received_power(radius, rx_gains, tx_gains, losses_ns, powerUnits, txPwr=txPwr, freq=freq)
     # store to dictionary for plotting
     signals[recv] = (signal_ew, signal_ns)
-    savepath = str(recv)+"_intensity"
-    #np.savez_compressed(savepath, ew=signal_ew,ns=signal_ns)
-
+    # savepath = str(recv)+"_theta"
+    # np.savez_compressed(savepath, theta=np.abs(np.abs(thetas)-np.pi/2))
 ############################################## Plotting ##################################################
 #np.savez_compressed("times", times=times_interp)
-ut.showPlots(times_interp=times_interp, radius=rad_for_plots, receive_enum=Receiver, signals=signals,  
-              powerUnits=powerUnits, startTime=startTime, endTime=endTime,thetas=thetas, 
-              power=power, powerSum=powerSum, trajectory=trajectory)
+# ut.showPlots(times_interp=times_interp, radius=rad_for_plots, receive_enum=Receiver, signals=signals,  
+#               powerUnits=powerUnits, startTime=startTime, endTime=endTime,thetas=thetas, 
+#               power=power, powerSum=powerSum, trajectory=trajectory)
+counter = 0
+for recv in Receiver:
+    ew, ns = signals[recv]
+    plt.plot(theta_arr[:,counter], ew, label=str(Receiver(counter).name)+" EW")
+    plt.plot(theta_arr[:,counter], ns, label=str(Receiver(counter).name)+" NS")
+    counter += 1
+plt.xlabel("Theta (degrees)")
+plt.ylabel("Received Power (dBm)")
+plt.title("Received Power vs Elevation Angle")
+plt.legend()
+plt.show()
